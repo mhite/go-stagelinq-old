@@ -383,6 +383,133 @@ func (m *stateEmitMessage) writeTo(w io.Writer) (err error) {
 	return
 }
 
+// beatinfo
+// adapting from statemap approach, mostly copy-pasta so far
+
+type beatInfoSubscribeMessage struct {
+}
+
+// placeholder, copy-pasta from statemap
+func (m *beatInfoSubscribeMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
+	// fix
+	return checkSmaa(r, 0x000007d2)
+}
+func (m *beatInfoSubscribeMessage) readFrom(r io.Reader) (err error) {
+	return
+}
+
+func (m *beatInfoSubscribeMessage) writeTo(w io.Writer) (err error) {
+	buf := new(bytes.Buffer)
+	// write beatinfo start message
+	if _, err = buf.Write([]byte{0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00}); err != nil {
+		return
+	}
+
+	// send actual message over wire
+	_, err = w.Write(buf.Bytes())
+	return
+}
+
+// placeholder, copy-pasta from statemap
+type beatEmitMessage struct {
+	//Length uint32
+	//Unknown []byte = {0x73,0x6d,0x61,0x61}
+	//Unknown2 []byte = {0x00,0x00,0x00,0x00}
+	Name string
+	JSON string
+}
+
+// placeholder, copy-pasta from statemap
+func (m *beatEmitMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
+	return checkSmaa(r, 0x00000000)
+}
+
+// placeholder, copy-pasta from statemap
+func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
+	// read expected message length
+	var expectedLength uint32
+	if err = binary.Read(r, binary.BigEndian, &expectedLength); err != nil {
+		return
+	}
+
+	// set up buffer to write message into
+	msgBytes := make([]byte, int(expectedLength))
+	msgBytesOffset := 0
+	for msgBytesOffset < int(expectedLength) {
+		var n int
+		if n, err = r.Read(msgBytes[msgBytesOffset:]); err != nil {
+			return
+		}
+		msgBytesOffset += n
+	}
+	msgReader := bytes.NewReader(msgBytes)
+
+	// read smaa magic bytes
+	magicBytes := make([]byte, 4)
+	if _, err = msgReader.Read(magicBytes); err != nil {
+		return
+	}
+	if !bytes.Equal(magicBytes, smaaMagicBytes) {
+		err = errors.New("invalid smaa magic bytes")
+		return
+	}
+
+	// TODO - figure this out
+	if _, err = msgReader.Read(magicBytes); err != nil {
+		return
+	}
+	if !bytes.Equal(magicBytes, []byte{0x00, 0x00, 0x00, 0x00}) {
+		err = errors.New("invalid post-smaa magic bytes")
+		return
+	}
+
+	// read value name
+	if err = readNetworkString(msgReader, &m.Name); err != nil {
+		return
+	}
+
+	// read value JSON
+	if err = readNetworkString(msgReader, &m.JSON); err != nil {
+		return
+	}
+
+	return
+}
+
+// placeholder, copy-pasta from statemap
+func (m *beatEmitMessage) writeTo(w io.Writer) (err error) {
+	buf := new(bytes.Buffer)
+
+	// write smaa magic bytes to message buffer
+	if _, err = buf.Write(smaaMagicBytes); err != nil {
+		return
+	}
+
+	// TODO - figure this out
+	if _, err = buf.Write([]byte{0x00, 0x00, 0x00, 0x00}); err != nil {
+		return
+	}
+
+	// write value name to message buffer
+	if err = writeNetworkString(buf, m.Name); err != nil {
+		return
+	}
+
+	// write value JSON to message buffer
+	if err = writeNetworkString(buf, m.JSON); err != nil {
+		return
+	}
+
+	// send message length over wire
+	if err = binary.Write(w, binary.BigEndian, uint32(buf.Len())); err != nil {
+		return
+	}
+
+	// send actual message over wire
+	_, err = w.Write(buf.Bytes())
+	return
+}
+
 // discovererMessageAction is the action taken by a device as part of StagelinQ device discovery.
 // Possible values are DiscovererHowdy or DiscovererExit.
 type discovererMessageAction string
