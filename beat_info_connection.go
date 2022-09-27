@@ -19,6 +19,15 @@ var beatInfoConnectionMessageSet = newDeviceConnMessageSet([]message{&beatEmitMe
 
 func NewBeatInfoConnection(conn net.Conn, token Token) (bic *BeatInfoConnection, err error) {
 	msgConn := newMessageConnection(conn, beatInfoConnectionMessageSet)
+	// perform in-protocol service request
+	msgConn.WriteMessage(&serviceAnnouncementMessage{
+		tokenPrefixedMessage: tokenPrefixedMessage{
+			Token: token,
+		},
+		Service: "BeatInfo",
+		Port:    uint16(getPort(conn.LocalAddr())),
+	})
+
 	return &BeatInfoConnection{
 		conn:      msgConn,
 		errC:      make(chan error),
