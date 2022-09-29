@@ -8,6 +8,6 @@ require (
 	golang.org/x/text v0.3.4
 )
 
-replace github.com/icedream/go-stagelinq => /Users/mhite/repo/mhite/go-stagelinq beatinfo
+replace github.com/icedream/go-stagelinq => github.com/mhite/go-stagelinq beatinfo
 
 // replace github.com/icedream/go-stagelinq => /Users/mhite/repo/mhite/go-stagelinq
