@@ -384,17 +384,18 @@ func (m *stateEmitMessage) writeTo(w io.Writer) (err error) {
 }
 
 // beatinfo
-// adapting from statemap approach, mostly copy-pasta so far
 
+// TODO: fix?
 type beatInfoSubscribeMessage struct {
 }
 
-// placeholder, copy-pasta from statemap
+// TODO: fix?
 func (m *beatInfoSubscribeMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
 	// fix
 	return checkSmaa(r, 0x000007d2)
 }
 func (m *beatInfoSubscribeMessage) readFrom(r io.Reader) (err error) {
+	// unimplemented
 	return
 }
 
@@ -410,21 +411,28 @@ func (m *beatInfoSubscribeMessage) writeTo(w io.Writer) (err error) {
 	return
 }
 
-// placeholder, copy-pasta from statemap
+var beatEmitMagicBytes = []byte{0x0, 0x0, 0x0, 0x2}
+
+type PlayerInfo struct {
+	Beat       float64
+	TotalBeats float64
+	Bpm        float64
+}
+
 type beatEmitMessage struct {
 	//Length uint32
-	//Unknown []byte = {0x73,0x6d,0x61,0x61}
-	//Unknown2 []byte = {0x00,0x00,0x00,0x00}
-	Name string
-	JSON string
+	//Unknown []byte = {0x00,0x00,0x00,0x02}
+	Clock     uint64
+	Players   []PlayerInfo
+	Timelines []uint64
 }
 
-// placeholder, copy-pasta from statemap
 func (m *beatEmitMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
-	return checkSmaa(r, 0x00000000)
+	// return checkSmaa(r, 0x00000000)
+	// TODO: implement
+	return true, nil
 }
 
-// placeholder, copy-pasta from statemap
 func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 	// read expected message length
 	var expectedLength uint32
@@ -444,69 +452,67 @@ func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 	}
 	msgReader := bytes.NewReader(msgBytes)
 
-	// read smaa magic bytes
+	// read beatEmit magic bytes
 	magicBytes := make([]byte, 4)
 	if _, err = msgReader.Read(magicBytes); err != nil {
 		return
 	}
-	if !bytes.Equal(magicBytes, smaaMagicBytes) {
-		err = errors.New("invalid smaa magic bytes")
+	if !bytes.Equal(magicBytes, beatEmitMagicBytes) {
+		err = errors.New("invalid magic bytes")
 		return
 	}
 
-	// TODO - figure this out
-	if _, err = msgReader.Read(magicBytes); err != nil {
+	// read clock value
+	if err = binary.Read(msgReader, binary.BigEndian, &m.Clock); err != nil {
 		return
 	}
-	if !bytes.Equal(magicBytes, []byte{0x00, 0x00, 0x00, 0x00}) {
-		err = errors.New("invalid post-smaa magic bytes")
-		return
-	}
-
-	// read value name
-	if err = readNetworkString(msgReader, &m.Name); err != nil {
+	// read expected player records
+	var expectedRecords uint32
+	if err = binary.Read(msgReader, binary.BigEndian, &expectedRecords); err != nil {
 		return
 	}
 
-	// read value JSON
-	if err = readNetworkString(msgReader, &m.JSON); err != nil {
-		return
+	// bounds check
+	// each playerInfo record is 24 bytes
+	if msgReader.Len() < int(expectedRecords)*24 {
+		err = errors.New("unknown packet format")
+	}
+
+	// loop through players records
+	for i := 0; i < int(expectedRecords); i++ {
+		var p PlayerInfo
+		if err = binary.Read(msgReader, binary.BigEndian, &p.Beat); err != nil {
+			return
+		}
+		if err = binary.Read(msgReader, binary.BigEndian, &p.TotalBeats); err != nil {
+			return
+		}
+		if err = binary.Read(msgReader, binary.BigEndian, &p.Bpm); err != nil {
+			return
+		}
+		m.Players = append(m.Players, p)
+	}
+
+	// bounds check
+	// the rest of our payload should contain exactly enough bytes for the timeline records
+	if msgReader.Len() == int(expectedRecords)*8 {
+		err = errors.New("unknown packet format")
+	}
+
+	// loop through timelines
+	for i := 0; i < int(expectedRecords); i++ {
+		var t uint64
+		if err = binary.Read(msgReader, binary.BigEndian, &t); err != nil {
+			return
+		}
+		m.Timelines = append(m.Timelines, t)
 	}
 
 	return
 }
 
-// placeholder, copy-pasta from statemap
 func (m *beatEmitMessage) writeTo(w io.Writer) (err error) {
-	buf := new(bytes.Buffer)
-
-	// write smaa magic bytes to message buffer
-	if _, err = buf.Write(smaaMagicBytes); err != nil {
-		return
-	}
-
-	// TODO - figure this out
-	if _, err = buf.Write([]byte{0x00, 0x00, 0x00, 0x00}); err != nil {
-		return
-	}
-
-	// write value name to message buffer
-	if err = writeNetworkString(buf, m.Name); err != nil {
-		return
-	}
-
-	// write value JSON to message buffer
-	if err = writeNetworkString(buf, m.JSON); err != nil {
-		return
-	}
-
-	// send message length over wire
-	if err = binary.Write(w, binary.BigEndian, uint32(buf.Len())); err != nil {
-		return
-	}
-
-	// send actual message over wire
-	_, err = w.Write(buf.Bytes())
+	// unimplemented
 	return
 }
 

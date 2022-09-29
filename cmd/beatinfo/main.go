@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/icedream/go-stagelinq"
 )
 
@@ -77,8 +78,6 @@ discoveryLoop:
 					log.Printf("\toffers %s at port %d", service.Name, service.Port)
 					switch service.Name {
 					case "BeatInfo":
-						log.Println("\t\tsleeping 10...")
-						time.Sleep(30 * time.Second)
 						log.Println("\t\tconnecting to BeatInfo...")
 						beatInfoTCPConn, err := device.Dial(service.Port)
 						defer beatInfoTCPConn.Close()
@@ -91,10 +90,14 @@ discoveryLoop:
 							log.Printf("WARNING: %s", err.Error())
 							continue
 						}
+
 						log.Println("\t\trequesting start BeatInfo...")
 						beatInfoConn.Subscribe()
-						log.Println("\t\tsleeping 30...")
-						time.Sleep(30 * time.Second)
+
+						for bi := range beatInfoConn.BeatInfoC() {
+							spew.Dump(bi)
+						}
+
 						beatInfoTCPConn.Close()
 					}
 				}
