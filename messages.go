@@ -383,25 +383,23 @@ func (m *stateEmitMessage) writeTo(w io.Writer) (err error) {
 	return
 }
 
-// beatinfo
+// BeatInfo
 
-// TODO: fix?
-type beatInfoSubscribeMessage struct {
+type beatInfoStartStreamMessage struct {
 }
 
-// TODO: fix?
-func (m *beatInfoSubscribeMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
-	// fix
-	return checkSmaa(r, 0x000007d2)
+func (m *beatInfoStartStreamMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
+	// unimplemented
+	return
 }
-func (m *beatInfoSubscribeMessage) readFrom(r io.Reader) (err error) {
+func (m *beatInfoStartStreamMessage) readFrom(r io.Reader) (err error) {
 	// unimplemented
 	return
 }
 
-func (m *beatInfoSubscribeMessage) writeTo(w io.Writer) (err error) {
+func (m *beatInfoStartStreamMessage) writeTo(w io.Writer) (err error) {
 	buf := new(bytes.Buffer)
-	// write beatinfo start message
+	// write BeatInfo "start stream" message
 	if _, err = buf.Write([]byte{0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00}); err != nil {
 		return
 	}
@@ -421,16 +419,23 @@ type PlayerInfo struct {
 
 type beatEmitMessage struct {
 	//Length uint32
-	//Unknown []byte = {0x00,0x00,0x00,0x02}
+	//Magic []byte = {0x00,0x00,0x00,0x02}
 	Clock     uint64
 	Players   []PlayerInfo
-	Timelines []uint64
+	Timelines []float64
 }
 
 func (m *beatEmitMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
-	// return checkSmaa(r, 0x00000000)
-	// TODO: implement
-	return true, nil
+	// peek length bytes and magic bytes
+	b, err := r.Peek(4 + 4)
+	if err != nil {
+		return
+	}
+	// check magic bytes
+	if ok = bytes.Equal(b[4:8], beatEmitMagicBytes); !ok {
+		return
+	}
+	return
 }
 
 func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
@@ -466,6 +471,7 @@ func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 	if err = binary.Read(msgReader, binary.BigEndian, &m.Clock); err != nil {
 		return
 	}
+
 	// read expected player records
 	var expectedRecords uint32
 	if err = binary.Read(msgReader, binary.BigEndian, &expectedRecords); err != nil {
@@ -501,7 +507,7 @@ func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 
 	// loop through timelines
 	for i := 0; i < int(expectedRecords); i++ {
-		var t uint64
+		var t float64
 		if err = binary.Read(msgReader, binary.BigEndian, &t); err != nil {
 			return
 		}

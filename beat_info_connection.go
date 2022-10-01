@@ -8,7 +8,7 @@ import (
 type BeatInfo struct {
 	Clock     uint64
 	Players   []PlayerInfo
-	Timelines []uint64
+	Timelines []float64
 }
 
 // BeatInfoConnection provides functionality to communicate with the BeatInfo data source.
@@ -31,6 +31,7 @@ func NewBeatInfoConnection(conn net.Conn, token Token) (bic *BeatInfoConnection,
 		errC:      errC,
 		beatInfoC: beatInfoC,
 	}
+
 	// perform in-protocol service request
 	msgConn.WriteMessage(&serviceAnnouncementMessage{
 		tokenPrefixedMessage: tokenPrefixedMessage{
@@ -72,17 +73,17 @@ func NewBeatInfoConnection(conn net.Conn, token Token) (bic *BeatInfoConnection,
 	return
 }
 
-// Subscribe tells the StagelinQ device to let us know about changes for the given state value.
-func (bic *BeatInfoConnection) Subscribe() error {
-	return bic.conn.WriteMessage(&beatInfoSubscribeMessage{})
+// StartStream tells the StagelinQ device to start publishing the device BeatInfo data stream.
+func (bic *BeatInfoConnection) StartStream() error {
+	return bic.conn.WriteMessage(&beatInfoStartStreamMessage{})
 }
 
-// StateC returns the channel via which state changes will be returned for this connection.
+// BeatInfoC returns the channel via which the BeatInfo data stream will be published for this connection.
 func (bic *BeatInfoConnection) BeatInfoC() <-chan *BeatInfo {
 	return bic.beatInfoC
 }
 
-// ErrorC returns the channel via which connectionrerors will be returned for this connection.
+// ErrorC returns the channel via which connection errors will be returned for this connection.
 func (bic *BeatInfoConnection) ErrorC() <-chan error {
 	return bic.errC
 }

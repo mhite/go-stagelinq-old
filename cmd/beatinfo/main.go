@@ -2,6 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
@@ -91,13 +94,26 @@ discoveryLoop:
 							continue
 						}
 
-						log.Println("\t\trequesting start BeatInfo...")
-						beatInfoConn.Subscribe()
+						log.Println("\t\trequesting start BeatInfo stream... PRESS CTRL-C TO ABORT!")
+						abortC := make(chan os.Signal, 1)
+						signal.Notify(abortC, os.Interrupt, syscall.SIGTERM)
+						beatInfoConn.StartStream()
 
-						for bi := range beatInfoConn.BeatInfoC() {
-							spew.Dump(bi)
+					beatInfoLoop:
+						for {
+							select {
+							case bi := <-beatInfoConn.BeatInfoC():
+								spew.Dump(bi)
+							case <-abortC:
+								break beatInfoLoop
+							}
 						}
-
+						// empty error channel
+						select {
+						case err := <-beatInfoConn.ErrorC():
+							log.Printf("WARNING: %s", err.Error())
+						default:
+						}
 						beatInfoTCPConn.Close()
 					}
 				}
