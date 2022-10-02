@@ -7,6 +7,6 @@ require (
 	golang.org/x/text v0.3.4
 )
 
-replace github.com/icedream/go-stagelinq => github.com/mhite/go-stagelinq beatinfo
+replace github.com/icedream/go-stagelinq => github.com/mhite/go-stagelinq v0.0.2-0.20221001163917-f3a3206a3c3b
 
 // replace github.com/icedream/go-stagelinq => /Users/mhite/repo/mhite/go-stagelinq
