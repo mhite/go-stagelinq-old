@@ -12,6 +12,7 @@ An example application is provided that, if running successfully, will output in
 
 - Automatically discover StagelinQ-compatible devices on the network
 - Access state map information such as currently playing track metadata, fader values, etc.
+- Access live beat stream information such as current beat, total beats, bpm, and timeline position.
 
 ## Stability
 
@@ -21,10 +22,21 @@ If you have any other Denon devices you would like to test this library against,
 
 ## Building
 
-Make sure you have a recent version of Go with module support enabled, then you can install the `stagelinq-discover` example binary by one of two means:
+Please make sure you have a recent version of Go with module support enabled.
+
+### stagelinq-discover
+
+You may install the `stagelinq-discover` example binary by one of two means:
 
 - `git clone` this repository and run `go build -v ./cmd/stagelinq-discover` to build the binary.
 - Run `go install github.com/icedream/go-stagelinq/cmd/stagelinq-discover` to install the binary to your `$GOPATH`.
+
+### beatinfo
+
+You may install the `beatinfo` example binary by one of two means:
+
+- `git clone` this repository and run `go build -v ./cmd/beatinfo` to build the binary.
+- Run `go install github.com/icedream/go-stagelinq/cmd/beatinfo` to install the binary to your `$GOPATH`.
 
 ## Usage
 
