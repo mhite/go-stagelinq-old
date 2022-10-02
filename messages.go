@@ -389,11 +389,11 @@ type beatInfoStartStreamMessage struct {
 }
 
 func (m *beatInfoStartStreamMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
-	// unimplemented
+	// TODO
 	return
 }
 func (m *beatInfoStartStreamMessage) readFrom(r io.Reader) (err error) {
-	// unimplemented
+	// TODO
 	return
 }
 
@@ -518,7 +518,7 @@ func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 }
 
 func (m *beatEmitMessage) writeTo(w io.Writer) (err error) {
-	// unimplemented
+	// TODO
 	return
 }
 
