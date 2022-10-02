@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/icedream/go-stagelinq"
 )
 
@@ -103,7 +102,7 @@ discoveryLoop:
 						for {
 							select {
 							case bi := <-beatInfoConn.BeatInfoC():
-								spew.Dump(bi)
+								log.Printf("\t\t\t%+v", bi)
 							case <-abortC:
 								break beatInfoLoop
 							}
