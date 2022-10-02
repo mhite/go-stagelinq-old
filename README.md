@@ -16,7 +16,7 @@ An example application is provided that, if running successfully, will output in
 
 ## Stability
 
-The code of this project is an **experimental** reverse-engineering effort and therefor can behave erratically in untested cases. Currently, this code only has been practically tested with the Denon Prime 4.
+The code of this project is an **experimental** reverse-engineering effort and therefore can behave erratically in untested cases. Currently, this code only has been practically tested with the Denon Prime 4.
 
 If you have any other Denon devices you would like to test this library against, please do! Even better, you can let me know if you run into any bugs by reporting them [as an issue ticket](https://github.com/icedream/go-stagelinq/issues).
 
