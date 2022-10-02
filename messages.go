@@ -518,7 +518,57 @@ func (m *beatEmitMessage) readFrom(r io.Reader) (err error) {
 }
 
 func (m *beatEmitMessage) writeTo(w io.Writer) (err error) {
-	// TODO
+	// sanity check number of records
+	numRecords := len(m.Players)
+	if numRecords != len(m.Timelines) {
+		err = errors.New("number of player records must match number of timeline records")
+		return
+	}
+
+	buf := new(bytes.Buffer)
+
+	// write magic bytes to message buffer
+	if _, err = buf.Write(beatEmitMagicBytes); err != nil {
+		return
+	}
+
+	// write clock
+	if err = binary.Write(buf, binary.BigEndian, m.Clock); err != nil {
+		return
+	}
+
+	// write number of records
+	if err = binary.Write(buf, binary.BigEndian, uint32(numRecords)); err != nil {
+		return
+	}
+
+	// write beat info records
+	for _, bi := range m.Players {
+		if err = binary.Write(buf, binary.BigEndian, bi.Beat); err != nil {
+			return
+		}
+		if err = binary.Write(buf, binary.BigEndian, bi.TotalBeats); err != nil {
+			return
+		}
+		if err = binary.Write(buf, binary.BigEndian, bi.Bpm); err != nil {
+			return
+		}
+	}
+
+	// write timeline records
+	for _, tl := range m.Timelines {
+		if err = binary.Write(buf, binary.BigEndian, tl); err != nil {
+			return
+		}
+	}
+
+	// send message length over wire
+	if err = binary.Write(w, binary.BigEndian, uint32(buf.Len())); err != nil {
+		return
+	}
+
+	// send actual message over wire
+	_, err = w.Write(buf.Bytes())
 	return
 }
 
