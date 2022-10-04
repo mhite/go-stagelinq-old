@@ -78,6 +78,11 @@ func (bic *BeatInfoConnection) StartStream() error {
 	return bic.conn.WriteMessage(&beatInfoStartStreamMessage{})
 }
 
+// StopStream tells the StagelinQ device to stop publishing the device BeatInfo data stream.
+func (bic *BeatInfoConnection) StopStream() error {
+	return bic.conn.WriteMessage(&beatInfoStopStreamMessage{})
+}
+
 // BeatInfoC returns the channel via which the BeatInfo data stream will be published for this connection.
 func (bic *BeatInfoConnection) BeatInfoC() <-chan *BeatInfo {
 	return bic.beatInfoC

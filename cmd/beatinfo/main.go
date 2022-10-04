@@ -82,7 +82,6 @@ discoveryLoop:
 					case "BeatInfo":
 						log.Println("\t\tconnecting to BeatInfo...")
 						beatInfoTCPConn, err := device.Dial(service.Port)
-						defer beatInfoTCPConn.Close()
 						if err != nil {
 							log.Printf("WARNING: %s", err.Error())
 							continue
@@ -104,6 +103,7 @@ discoveryLoop:
 							case bi := <-beatInfoConn.BeatInfoC():
 								log.Printf("\t\t\t%+v", bi)
 							case <-abortC:
+								beatInfoConn.StopStream()
 								break beatInfoLoop
 							}
 						}

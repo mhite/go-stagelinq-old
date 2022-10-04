@@ -385,22 +385,132 @@ func (m *stateEmitMessage) writeTo(w io.Writer) (err error) {
 
 // BeatInfo
 
+var beatInfoStartStreamMagicBytes = []byte{0x0, 0x0, 0x0, 0x0}
+
 type beatInfoStartStreamMessage struct {
 }
 
 func (m *beatInfoStartStreamMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
-	// TODO
+	// peek length bytes and magic bytes
+	b, err := r.Peek(4 + 4)
+	if err != nil {
+		return
+	}
+	// check magic bytes
+	if ok = bytes.Equal(b[4:8], beatInfoStartStreamMagicBytes); !ok {
+		return
+	}
 	return
 }
+
 func (m *beatInfoStartStreamMessage) readFrom(r io.Reader) (err error) {
-	// TODO
+	// read expected message length
+	var expectedLength uint32
+	if err = binary.Read(r, binary.BigEndian, &expectedLength); err != nil {
+		return
+	}
+
+	// set up buffer to write message into
+	msgBytes := make([]byte, int(expectedLength))
+	msgBytesOffset := 0
+	for msgBytesOffset < int(expectedLength) {
+		var n int
+		if n, err = r.Read(msgBytes[msgBytesOffset:]); err != nil {
+			return
+		}
+		msgBytesOffset += n
+	}
+	msgReader := bytes.NewReader(msgBytes)
+
+	// read beatInfoStartStream magic bytes
+	magicBytes := make([]byte, 4)
+	if _, err = msgReader.Read(magicBytes); err != nil {
+		return
+	}
+	if !bytes.Equal(magicBytes, beatInfoStartStreamMagicBytes) {
+		return errors.New("invalid magic bytes")
+	}
+
 	return
 }
 
 func (m *beatInfoStartStreamMessage) writeTo(w io.Writer) (err error) {
 	buf := new(bytes.Buffer)
-	// write BeatInfo "start stream" message
-	if _, err = buf.Write([]byte{0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00}); err != nil {
+
+	payload_len := len(beatInfoStartStreamMagicBytes)
+	if err = binary.Write(buf, binary.BigEndian, uint32(payload_len)); err != nil {
+		return
+	}
+
+	// write BeatInfo "start stream" magic bytes
+	if _, err = buf.Write(beatInfoStartStreamMagicBytes); err != nil {
+		return
+	}
+
+	// send actual message over wire
+	_, err = w.Write(buf.Bytes())
+	return
+}
+
+var beatInfoStopStreamMagicBytes = []byte{0x0, 0x0, 0x0, 0x1}
+
+type beatInfoStopStreamMessage struct {
+}
+
+func (m *beatInfoStopStreamMessage) checkMatch(r *bufio.Reader) (ok bool, err error) {
+	// peek length bytes and magic bytes
+	b, err := r.Peek(4 + 4)
+	if err != nil {
+		return
+	}
+	// check magic bytes
+	if ok = bytes.Equal(b[4:8], beatInfoStopStreamMagicBytes); !ok {
+		return
+	}
+	return
+}
+
+func (m *beatInfoStopStreamMessage) readFrom(r io.Reader) (err error) {
+	// read expected message length
+	var expectedLength uint32
+	if err = binary.Read(r, binary.BigEndian, &expectedLength); err != nil {
+		return
+	}
+
+	// set up buffer to write message into
+	msgBytes := make([]byte, int(expectedLength))
+	msgBytesOffset := 0
+	for msgBytesOffset < int(expectedLength) {
+		var n int
+		if n, err = r.Read(msgBytes[msgBytesOffset:]); err != nil {
+			return
+		}
+		msgBytesOffset += n
+	}
+	msgReader := bytes.NewReader(msgBytes)
+
+	// read beatInfoStopStream magic bytes
+	magicBytes := make([]byte, 4)
+	if _, err = msgReader.Read(magicBytes); err != nil {
+		return
+	}
+	if !bytes.Equal(magicBytes, beatInfoStopStreamMagicBytes) {
+		return errors.New("invalid magic bytes")
+	}
+
+	return
+}
+
+func (m *beatInfoStopStreamMessage) writeTo(w io.Writer) (err error) {
+	buf := new(bytes.Buffer)
+
+	payload_len := len(beatInfoStopStreamMagicBytes)
+	if err = binary.Write(buf, binary.BigEndian, uint32(payload_len)); err != nil {
+		return
+	}
+
+	// write BeatInfo "stop stream" magic bytes
+	if _, err = buf.Write(beatInfoStopStreamMagicBytes); err != nil {
 		return
 	}
 
